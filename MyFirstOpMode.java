@@ -55,11 +55,10 @@ public class MyFirstOpMode extends LinearOpMode {
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
     private DcMotor crane = null;
-    private DcMotor crane1 = null;
-    private DcMotor rightFoot = null;
-    private DcMotor leftFoot = null;
+    private DcMotor extendingArm = null;
     //private DcMotor swiper = null;
-    private Servo boxHold = null;
+    private Servo left_Grabber = null;
+    private Servo right_Grabber = null;
     
 
 
@@ -74,12 +73,10 @@ public class MyFirstOpMode extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "rightFront_Drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "rightBack_Drive");
         crane = hardwareMap.get(DcMotor.class, "crane");
-        crane1 = hardwareMap.get(DcMotor.class, "crane1");
-        rightFoot = hardwareMap.get(DcMotor.class, "rightFoot");
-        leftFoot = hardwareMap.get(DcMotor.class, "leftFoot");
         //swiper = hardwareMap.get(DcMotor.class, "swiper");
         
-        boxHold = hardwareMap.get(Servo.class, "boxHold");
+        left_Grabber = hardwareMap.get(Servo.class, "left_Grabber");
+        right_Grabber = hardwareMap.get(Servo.class, "right_Grabber");
         
 
         // Most robots need the motor on one side to be reversed to drive forward
@@ -91,11 +88,7 @@ public class MyFirstOpMode extends LinearOpMode {
         rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
         
         crane.setDirection(DcMotor.Direction.REVERSE);
-        crane1.setDirection(DcMotor.Direction.REVERSE);
-        
-        leftFoot.setDirection(DcMotor.Direction.FORWARD);
-        rightFoot.setDirection(DcMotor.Direction.REVERSE);
-        
+
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData("Status", "Initialized");
         telemetry.addData("Status", "Waiting for start");
@@ -122,25 +115,38 @@ public class MyFirstOpMode extends LinearOpMode {
             double strafe  =  gamepad1.right_stick_x;
             boolean strafeMode = gamepad1.left_bumper;
             boolean turnMode = gamepad1.right_bumper;
+            boolean slowMode = gamepad1.b;
             String strafeActive = "NO";
-             //Strafe Driving
+            String slowActive = "NO";
+            //Strafe Driving
             if (strafeMode) {
                 leftFrontPower    = Range.clip(strafe, -1.0, 1.0);
                 leftBackPower     = Range.clip(-strafe, -1.0, 1.0);
                 rightFrontPower   = Range.clip(-strafe, -1.0, 1.0);
                 rightBackPower    = Range.clip(strafe, -1.0, 1.0);
-                
+
                 strafeActive = "YES";
+                slowActive = "NO";
             }
-             //Normal Driving
+            else if (slowMode) {
+                leftFrontPower    = Range.clip(drive - strafe, -0.25, 0.25);
+                leftBackPower     = Range.clip(drive - strafe, -0.25, 0.25);
+                rightFrontPower   = Range.clip(drive + strafe, -0.25, 0.25);
+                rightBackPower    = Range.clip(drive + strafe, -0.25, 0.25);
+                strafeActive = "NO";
+                slowActive = "YES";
+            }
+            //Normal Driving
             else {
                 leftFrontPower    = Range.clip(drive - strafe, -0.5, 0.5);
                 leftBackPower     = Range.clip(drive - strafe, -0.5, 0.5);
                 rightFrontPower   = Range.clip(drive + strafe, -0.5, 0.5);
                 rightBackPower    = Range.clip(drive + strafe, -0.5, 0.5);
-                
+
                 strafeActive = "NO";
+                slowActive = "NO";
             }
+
 
 
             // Send calculated power to wheels
@@ -153,48 +159,45 @@ public class MyFirstOpMode extends LinearOpMode {
             //                   CRANE
             //Controls Cranes
             double cranePower;
+            double armPower;
 
             double craneMove = gamepad2.left_stick_y;
-            boolean liftUp = gamepad2.right_bumper;
-            String crazyLift = "NO";
+            double armMove = gamepad2.right_stick_y;
             
             cranePower = Range.clip(craneMove, -0.5, 0.5);
-            
-            if (liftUp) {
-                cranePower = cranePower * 10;
-                crazyLift = "YES";
-            }
-            
-            else {
-                crazyLift = "NO";
-            }
+            armPower = Range.clip(armMove,  -0.5, 0.5);
+
             crane.setPower(cranePower);
-            crane1.setPower(cranePower);
-            
+            extendingArm.setPower(armPower);
+
             //                   Feet
             //Allows you to lift using the feet
-            double feetPower;
+
+
+            //double feetPower;
+
+
+            //boolean feetLift = gamepad2.right_bumper;
+            //boolean feetLower = gamepad2.left_bumper;
+            //String feetStatus = "STANDBY";
             
-            boolean feetLift = gamepad2.right_bumper;
-            boolean feetLower = gamepad2.left_bumper;
-            String feetStatus = "STANDBY";
+            //if(feetLift) {
+            //    feetPower = 2;
+            //    feetStatus = "LIFTING";
+            //}
+            //else if (feetLower) {
+            //    feetPower = -2;
+            //    feetStatus = "LOWERING";
+            //}
+            //else {
+            //    feetPower = 0;
+            //    feetStatus = "STANDBY";
+            //}
             
-            if(feetLift) {
-                feetPower = 2;
-                feetStatus = "LIFTING";
-            }
-            else if (feetLower) {
-                feetPower = -2;
-                feetStatus = "LOWERING";
-            }
-            else {
-                feetPower = 0;
-                feetStatus = "STANDBY";
-            }
-            
-            leftFoot.setPower(feetPower);
-            rightFoot.setPower(feetPower);
-            
+            //leftFoot.setPower(feetPower);
+            //rightFoot.setPower(feetPower);
+
+
             
             //                   Swiper
             //Crotrols Sweeping Device
@@ -217,33 +220,29 @@ public class MyFirstOpMode extends LinearOpMode {
                 
             //swiper.setPower(swiperPower);
             
-            //                   Box
-            //Controls Box
-            double boxHoldPower;
-            double boxHoldPos;
+            //                   Grabbers
+            //Controls Grabbers
+            double grabberPower;
+            double grabberPos;
 
-            double boxHoldMove = gamepad2.right_stick_x;
-            boolean boxHoldPreMove = gamepad2.x;
-            if (boxHoldPreMove) {
-                boxHoldPos = 0.5;
-                
-            }
+            double grabberMove = gamepad2.right_stick_x;
+
+                grabberPower = Range.clip(grabberMove, -1.0, 1.0);
+                grabberPos = grabberPower;
             
-            else {
-                boxHoldPower = Range.clip(boxHoldMove, 0.0, 1.0);
-                boxHoldPos = boxHoldPower;
-            }
-            
-            boxHold.setPosition(boxHoldPos);
+            left_Grabber.setPosition(-grabberPos);
+            right_Grabber.setPosition(grabberPos);
 
         
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("STRAFE - Activated:", strafeActive);
-            telemetry.addData("Crazy Crane - Activated:", crazyLift);
+            telemetry.addData("SLOW - Activated:", slowActive);
+            //telemetry.addData("Crazy Crane - Activated:", crazyLift);
             telemetry.addData("Motors", "front left (%.2f), front right (%.2f), back left (%.2f), back right (%.2f)", leftFrontPower, rightFrontPower, leftBackPower, rightBackPower);
             telemetry.addData("Crane", "(%.2f)", cranePower);
-            telemetry.addData("Feet:", feetStatus);
-            telemetry.addData("The Box", "(%.2f)", boxHoldPos);
+            telemetry.addData("Arm", "(%.2f)", armPower);
+            //telemetry.addData("Feet:", feetStatus);
+            telemetry.addData("Grabbers", "(%.2f)", grabberPos);
             telemetry.update();
 
         }
